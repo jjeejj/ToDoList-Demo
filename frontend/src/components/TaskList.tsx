@@ -18,7 +18,11 @@ export default function TaskList({ refreshTrigger }: TaskListProps) {
       setLoading(true);
       const request = new GetTasksRequest({});
       const response = await todoClient.getTasks(request);
-      setTasks(response.tasks || []);
+      // 按创建时间降序排序，新任务在上面
+      const sortedTasks = (response.tasks || []).sort((a, b) => {
+        return Number(b.createdAt) - Number(a.createdAt);
+      });
+      setTasks(sortedTasks);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     } finally {
@@ -43,9 +47,13 @@ export default function TaskList({ refreshTrigger }: TaskListProps) {
       const request = new UpdateTaskRequest({ id, completed: !completed });
       const response = await todoClient.updateTask(request);
       if (response.success && response.task) {
-        setTasks(tasks.map(task => 
+        // 更新任务后重新按创建时间排序
+        const updatedTasks = tasks.map(task => 
           task.id === id ? response.task! : task
-        ));
+        ).sort((a, b) => {
+          return Number(b.createdAt) - Number(a.createdAt);
+        });
+        setTasks(updatedTasks);
       }
     } catch (error) {
       console.error('Error updating task:', error);
